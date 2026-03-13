@@ -215,7 +215,7 @@ Plotly
 | Deep Learning Framework | PyTorch    |
 | Image Enhancement       | FUnIE-GAN  |
 | Object Detection        | YOLOv8     |
-| Feature Embedding       | ResNet50   |
+| Feature vector Embedding       | YOLOv8   |
 | Vector Search           | FAISS      |
 | Explainability          | Grad-CAM   |
 | Backend API             | FastAPI    |
@@ -248,9 +248,6 @@ underwater-security-ai/
 │   │
 │   ├── detection/
 │   │   └── yolo_detector.py
-│   │
-│   ├── embeddings/
-│   │   └── resnet_embedder.py
 │
 ├── vector_store/
 │   └── faiss_index.py
