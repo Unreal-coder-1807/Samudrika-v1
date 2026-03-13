@@ -1,0 +1,36 @@
+threat_levels:
+  CRITICAL:
+    classes: [naval_mine, torpedo]
+    confidence_threshold: 0.5
+    similarity_distance_max: 0.8
+  HIGH:
+    classes: [submarine, underwater_drone]
+    confidence_threshold: 0.6
+    similarity_distance_max: 1.2
+  MEDIUM:
+    classes: [diver, underwater_vehicle]
+    confidence_threshold: 0.65
+    similarity_distance_max: 1.5
+  LOW:
+    classes: [rov]
+    confidence_threshold: 0.7
+    similarity_distance_max: 2.0
+  UNKNOWN:
+    classes: [unknown]
+    default_level: HIGH
+
+override_rules:
+  - condition: confidence < 0.4
+    override_level: LOW
+  - condition: similarity_distance < 0.3
+    override_level: CRITICAL
+
+class_index_map:
+  submarine: 0
+  naval_mine: 1
+  diver: 2
+  rov: 3
+  torpedo: 4
+  underwater_drone: 5
+  underwater_vehicle: 6
+  unknown: 7
