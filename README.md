@@ -21,7 +21,7 @@ Underwater Image Enhancement
             ↓
 Object Detection
             ↓
-Feature Embedding
+Vector Embedding Generation
             ↓
 Vector Similarity Search
             ↓
