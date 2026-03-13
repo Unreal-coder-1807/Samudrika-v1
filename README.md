@@ -285,8 +285,8 @@ underwater-security-ai/
 Clone repository
 
 ```
-git clone <repo-url>
-cd underwater-security-ai
+git clone https://github.com/Unreal-coder-1807
+cd Samudrika-core
 ```
 
 Create virtual environment
