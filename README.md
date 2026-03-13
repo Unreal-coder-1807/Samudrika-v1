@@ -101,19 +101,19 @@ Outputs:
 
 ---
 
-# 4. Feature Embedding
+# 4. Vector Embedding Generation
 
-Detected objects are cropped and converted into **feature embeddings**.
+Detected objects are vectorized.
 
 Purpose:
 
-* enable similarity comparison
+* enable similarity comparison by matching vectors
 * allow object identity matching
 * reduce repeated processing
 
-Feature extractor:
+Feature extractor + vectorizer:
 
-ResNet50
+YOLOv8
 
 Workflow:
 
