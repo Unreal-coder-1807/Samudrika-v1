@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 
-const ringSizes = [200, 320, 460, 680, 900];
+const ringSizes = [200, 320, 460, 680, 900]
 
 export const HeroSection = () => {
-  const [hasScrolled, setHasScrolled] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setHasScrolled(window.scrollY > 24);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const onScroll = () => setHasScrolled(window.scrollY > 24)
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <section id="top" className="hero">
@@ -35,42 +35,30 @@ export const HeroSection = () => {
         </div>
 
         <h1 className="hero-title">
-          <span className="hero-line-1">Underwater Threat</span>
+          <span className="hero-line-1">Silence beneath the surface.</span>
           <br />
-          <span className="hero-line-2">
-            <span className="accent">Intelligence.</span>
-          </span>
+          <span className="hero-line-2">Nothing escapes.</span>
         </h1>
 
         <p className="hero-subtitle hero-sub">
-          A deep-sea AI surveillance pipeline developed for Indian Navy and
-          DRDO. Detect. Classify. Respond.
+          Samudrika-Core delivers underwater threat intelligence for Indian Navy and DRDO -
+          detecting, classifying, and scoring in real time.
         </p>
 
         <div className="hero-cta-row hero-cta">
           <button
             className="btn btn-outline"
-            onClick={() =>
-              document
-                .getElementById("contact")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
           >
             Request Briefing
           </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => (window.location.href = "/dashboard")}
-          >
+          <button className="btn btn-primary" onClick={() => (window.location.href = '/dashboard')}>
             Access Dashboard &#8594;
           </button>
         </div>
       </div>
 
-      <span
-        className={`scroll-indicator ${hasScrolled ? "hidden" : ""}`}
-        aria-hidden="true"
-      />
+      <span className={`scroll-indicator ${hasScrolled ? 'hidden' : ''}`} aria-hidden="true" />
     </section>
-  );
-};
+  )
+}

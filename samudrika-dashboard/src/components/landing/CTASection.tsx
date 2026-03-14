@@ -2,7 +2,7 @@ export const CTASection = () => (
   <section id="contact" className="cta-section reveal">
     <div className="landing-container">
       <div className="cta-pill">RESTRICTED ACCESS</div>
-      <h2 className="cta-title">Ready to deploy?</h2>
+      <h2 className="cta-title">Cleared for deployment.</h2>
       <p className="cta-sub">Built for Indian Navy and DRDO research operations.</p>
 
       <div className="cta-actions">

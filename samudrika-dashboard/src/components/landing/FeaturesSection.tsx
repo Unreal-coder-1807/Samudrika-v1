@@ -44,7 +44,7 @@ export const FeaturesSection = () => (
   <section id="features" className="landing-section reveal">
     <div className="landing-container">
       <div className="landing-overline">CAPABILITIES</div>
-      <h2 className="landing-headline">Built for the deep.</h2>
+      <h2 className="landing-headline">Engineered for the abyss.</h2>
 
       <div className="feature-grid">
         {FEATURES.map((feature) => (
