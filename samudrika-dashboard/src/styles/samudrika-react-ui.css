@@ -1,0 +1,56 @@
+.samudrika-react-landing {
+  --background: #010a0f;
+  --foreground: #ffffff;
+  --card: #02121a;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #111111;
+  --secondary-foreground: #ffffff;
+  --muted: #111111;
+  --muted-foreground: #888888;
+  --accent: #111111;
+  --accent-foreground: #ffffff;
+  --border: #222222;
+  --input: #222222;
+  --ring: #333333;
+  --blue-accent: #0044ff;
+}
+
+.samudrika-react-landing .liquid-card {
+  background: #050505;
+  border: 1px solid #222;
+  border-radius: 1.5rem;
+}
+
+.samudrika-react-landing .bg-background {
+  background-color: var(--background);
+}
+
+.samudrika-react-landing .border-border {
+  border-color: var(--border);
+}
+
+.samudrika-react-landing .text-muted-foreground {
+  color: var(--muted-foreground);
+}
+
+.samudrika-react-landing .ring-offset-background {
+  --tw-ring-offset-color: var(--background);
+}
+
+.samudrika-react-landing .bg-card {
+  background-color: var(--card);
+}
+
+@keyframes infinite-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.samudrika-react-landing .animate-infinite-scroll {
+  animation: infinite-scroll 25s linear infinite;
+}

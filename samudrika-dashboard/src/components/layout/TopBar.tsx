@@ -1,9 +1,10 @@
 import { Bell } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import UserPanel from '../auth/UserPanel'
 import { ThemeToggle } from '../common/ThemeToggle'
 
 const titleMap: Record<string, string> = {
-  '/': 'Operational Overview',
+  '/dashboard': 'Operational Overview',
   '/analyze': 'Frame Analysis',
   '/threat': 'Single Detection Scorer',
   '/history': 'Session History',
@@ -32,10 +33,7 @@ export const TopBar = () => {
               2
             </span>
           </div>
-          <div className="flex items-center gap-2 rounded border border-[var(--border-subtle)] px-2 py-1 text-xs">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            <span>OP-001 | ACTIVE</span>
-          </div>
+          <UserPanel />
         </div>
       </div>
     </header>

@@ -5,7 +5,7 @@ import { ClassificationBadge } from '../common/ClassificationBadge'
 import { useEffect, useState } from 'react'
 
 const navItems = [
-  { to: '/', label: 'Overview', icon: LayoutDashboard },
+  { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { to: '/analyze', label: 'Analyze', icon: Scan },
   { to: '/threat', label: 'Threat Score', icon: AlertTriangle },
   { to: '/history', label: 'History', icon: Clock },
