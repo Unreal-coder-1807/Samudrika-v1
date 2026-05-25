@@ -7,7 +7,6 @@ import { Play } from 'lucide-react';
 import { GLSLHills } from './glsl-hills';
 import { SITE_CONFIG } from '../../lib/constants';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -48,7 +47,6 @@ const AnimatedWord = ({ text }: { text: string }) => {
 export function AnimatedHero() {
   const { welcome, headline, subtitle, cta, operationalTag } = SITE_CONFIG.hero;
   const navigate = useNavigate();
-  const { isSignedIn } = useAuth();
 
   return (
     <section className="relative overflow-hidden w-full bg-black">
@@ -106,15 +104,15 @@ export function AnimatedHero() {
             <Button
               size="lg"
               className="bg-white text-black hover:bg-gray-200 rounded-full h-14 px-8 text-base font-bold transition-all hover:scale-105 active:scale-95"
-              onClick={() => navigate(isSignedIn ? '/dashboard' : '/sign-in')}
+              onClick={() => navigate('/dashboard')}
             >
-              {isSignedIn ? 'Go to Dashboard' : cta.primary} <Play className="ml-2 size-4 fill-black" />
+              {cta.primary} <Play className="ml-2 size-4 fill-black" />
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="rounded-full h-14 px-8 border-[#333] hover:bg-[#111] bg-transparent text-white hover:text-white text-base transition-all hover:border-white/50"
-              onClick={() => navigate(isSignedIn ? '/dashboard' : '/sign-in')}
+              onClick={() => navigate('/dashboard')}
             >
               {cta.secondary}
             </Button>

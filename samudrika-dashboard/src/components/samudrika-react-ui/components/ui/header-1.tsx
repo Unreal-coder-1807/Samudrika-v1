@@ -64,13 +64,13 @@ export function Header() {
           <Button
             variant="outline"
             className="text-white border-white/20 hover:bg-white/10 bg-transparent"
-            onClick={() => navigate("/sign-in")}
+            onClick={() => navigate("/login")}
           >
             Sign In
           </Button>
           <Button
             className="bg-white text-black hover:bg-white/90 active:bg-gray-100 active:scale-95"
-            onClick={() => navigate(isSignedIn ? "/dashboard" : "/sign-in")}
+            onClick={() => navigate(isSignedIn ? "/dashboard" : "/login")}
           >
             {isSignedIn ? "Go to Dashboard" : "Try Samudrika"}
           </Button>
@@ -106,15 +106,15 @@ export function Header() {
           <Button
             variant="outline"
             className="w-full text-white border-white/20 hover:bg-white/10 bg-transparent"
-            onClick={() => navigate("/sign-in")}
+            onClick={() => navigate("/login")}
           >
             Sign In
           </Button>
           <Button
             className="w-full bg-white text-black hover:bg-white/90 active:bg-gray-100 active:scale-95"
-            onClick={() => navigate(isSignedIn ? "/dashboard" : "/sign-in")}
+            onClick={() => navigate(isSignedIn ? "/dashboard" : "/login")}
           >
-            {isSignedIn ? "Go to Dashboard" : "Try Samudrika →"}
+            {isSignedIn ? "Go to Dashboard" : "Try Samudrika"}
           </Button>
         </div>
       </MobileMenu>

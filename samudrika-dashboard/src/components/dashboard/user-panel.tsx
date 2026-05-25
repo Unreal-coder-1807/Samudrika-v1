@@ -1,8 +1,10 @@
-import { useClerk, useUser } from "@clerk/clerk-react";
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+"use client";
 
-export default function UserPanel() {
+import { useClerk, useUser } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+
+export function UserPanel() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const navigate = useNavigate();
@@ -19,11 +21,12 @@ export default function UserPanel() {
 
   if (!isLoaded || !user) return null;
 
-  const initials = (
-    (user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")
-  ).toUpperCase() || user.primaryEmailAddress?.emailAddress?.[0]?.toUpperCase() || "OP";
+  const initials =
+    ((user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "")).toUpperCase() ||
+    user.primaryEmailAddress?.emailAddress?.[0]?.toUpperCase() ||
+    "OP";
 
-  const displayName = user.fullName || user.primaryEmailAddress?.emailAddress?.split("@")[0] || "Operator";
+  const displayName = user.fullName ?? user.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "Operator";
   const displayEmail = user.primaryEmailAddress?.emailAddress ?? "";
 
   return (
@@ -33,30 +36,29 @@ export default function UserPanel() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: 8,
           background: "rgba(255,255,255,0.04)",
           border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: "4px",
+          borderRadius: 4,
           padding: "5px 10px 5px 6px",
           cursor: "pointer",
-          transition: "background 0.2s",
+          fontFamily: "inherit",
         }}
       >
         <div
           style={{
-            width: "28px",
-            height: "28px",
+            width: 28,
+            height: 28,
             borderRadius: "50%",
-            background: "linear-gradient(135deg, #E040FB, #7B2FF7)",
+            background: "linear-gradient(135deg, #00B4D8, #0077B6)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: "11px",
+            fontSize: 11,
             fontWeight: 600,
-            color: "#FFFFFF",
-            fontFamily: "Inter, system-ui, sans-serif",
-            flexShrink: 0,
+            color: "#FFF",
             overflow: "hidden",
+            flexShrink: 0,
           }}
         >
           {user.imageUrl ? (
@@ -67,27 +69,31 @@ export default function UserPanel() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-          <span
-            style={{
-              fontSize: "11px",
-              fontWeight: 600,
-              color: "#E8F4FD",
-              fontFamily: "Inter, system-ui",
-              lineHeight: 1.2,
-            }}
-          >
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#E8F4FD", lineHeight: 1.2 }}>
             {displayName.toUpperCase()}
           </span>
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#06D6A0" }} />
-            <span style={{ fontSize: "10px", color: "#4A6B8A", fontFamily: "IBM Plex Mono, monospace", letterSpacing: "0.05em" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#06D6A0" }} />
+            <span style={{ fontSize: 10, color: "#4A6B8A", letterSpacing: "0.05em", fontFamily: "monospace" }}>
               ACTIVE
             </span>
           </div>
         </div>
 
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginLeft: "2px", transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "none" }}>
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="#4A6B8A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          fill="none"
+          style={{ transition: "transform 0.2s", transform: open ? "rotate(180deg)" : "none" }}
+        >
+          <path
+            d="M2 3.5L5 6.5L8 3.5"
+            stroke="#4A6B8A"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </button>
 
@@ -97,42 +103,50 @@ export default function UserPanel() {
             position: "absolute",
             top: "calc(100% + 8px)",
             right: 0,
-            width: "240px",
+            width: 240,
             background: "#0A1628",
             border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: "8px",
+            borderRadius: 8,
             overflow: "hidden",
             zIndex: 1000,
             boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
           }}
         >
-          <div style={{ padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  width: "38px",
-                  height: "38px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #E040FB, #7B2FF7)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  color: "#FFFFFF",
-                  overflow: "hidden",
-                  flexShrink: 0,
-                }}
-              >
-                {user.imageUrl ? (
-                  <img src={user.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  initials
-                )}
-              </div>
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "#E8F4FD", fontFamily: "Inter, system-ui" }}>{displayName}</div>
-                <div style={{ fontSize: "11px", color: "#4A6B8A", fontFamily: "IBM Plex Mono, monospace", marginTop: "2px" }}>{displayEmail}</div>
+          <div
+            style={{
+              padding: "14px 16px",
+              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #00B4D8, #0077B6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                fontWeight: 600,
+                color: "#FFF",
+                overflow: "hidden",
+                flexShrink: 0,
+              }}
+            >
+              {user.imageUrl ? (
+                <img src={user.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                initials
+              )}
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#E8F4FD" }}>{displayName}</div>
+              <div style={{ fontSize: 11, color: "#4A6B8A", fontFamily: "monospace", marginTop: 2 }}>
+                {displayEmail}
               </div>
             </div>
           </div>
@@ -142,15 +156,17 @@ export default function UserPanel() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
+                gap: 6,
                 background: "rgba(255,45,45,0.08)",
                 border: "1px solid rgba(255,45,45,0.2)",
-                borderRadius: "4px",
+                borderRadius: 4,
                 padding: "3px 8px",
               }}
             >
-              <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#FF2D2D" }} />
-              <span style={{ fontSize: "10px", color: "#FF6B6B", fontFamily: "IBM Plex Mono, monospace", letterSpacing: "0.1em" }}>RESTRICTED ACCESS</span>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#FF2D2D" }} />
+              <span style={{ fontSize: 10, color: "#FF6B6B", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+                RESTRICTED ACCESS
+              </span>
             </div>
           </div>
 
@@ -166,12 +182,11 @@ export default function UserPanel() {
               border: "none",
               display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: 10,
               cursor: "pointer",
-              transition: "background 0.15s",
               color: "#FF6B6B",
-              fontSize: "13px",
-              fontFamily: "Inter, system-ui",
+              fontSize: 13,
+              fontFamily: "inherit",
               fontWeight: 500,
             }}
             onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,45,45,0.06)")}

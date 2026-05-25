@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import logging
+import os
+import shutil
+import tempfile
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Dict
 
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,7 +25,10 @@ from vector_store.faiss_index import (
     load_index,
     search_embedding,
 )
-
+from models.enhancer import UnderwaterEnhancer
+from models.detector import ObjectDetector
+from utils.image_utils import image_to_base64
+from pipelines.inference_pipeline import run_pipeline
 
 logger = logging.getLogger("samudrika.track_b")
 logging.basicConfig(level=logging.INFO)
@@ -31,12 +37,7 @@ logging.basicConfig(level=logging.INFO)
 class DetectionInput(BaseModel):
     """
     Incoming detection format for API requests.
-
-    The external JSON field name is 'class', which is mapped to the internal
-    Pydantic field 'class_name' via an alias for compatibility with the Track A
-    output schema.
     """
-
     class_name: str = Field(alias="class")
     confidence: float
     bbox: list[float]
@@ -49,7 +50,6 @@ class FrameInput(BaseModel):
     """
     Input model representing a full frame of detections from Track A.
     """
-
     image_id: str
     detections: list[DetectionInput]
 
@@ -58,7 +58,6 @@ class SingleDetectionInput(BaseModel):
     """
     Input model for threat assessment of a single detection.
     """
-
     detection: DetectionInput
 
 
@@ -66,7 +65,6 @@ class ScoredDetectionOutput(BaseModel):
     """
     Output model for a single scored detection.
     """
-
     class_name: str
     confidence: float
     bbox: list[float]
@@ -80,18 +78,16 @@ class AnalyzeResponse(BaseModel):
     """
     Response model for the /analyze endpoint.
     """
-
-    image_id: str
-    frame_threat_level: str
-    scored_detections: list[ScoredDetectionOutput]
-    heatmap_paths: list[str]
+    enhanced_image: str
+    detections: list[Dict[str, Any]]
+    heatmap: str
+    threat_level: str
 
 
 class ThreatResponse(BaseModel):
     """
     Response model for the /threat endpoint.
     """
-
     threat_level: str
     threat_score: float
     reason: str
@@ -102,7 +98,6 @@ class HealthResponse(BaseModel):
     """
     Response model for the /health endpoint.
     """
-
     status: str
     faiss_index_size: int
     rules_loaded: bool
@@ -113,13 +108,7 @@ class HealthResponse(BaseModel):
 async def lifespan(app: FastAPI) -> Awaitable[None]:
     """
     Application lifespan context for initializing shared state.
-
-    On startup:
-        - Loads or creates the FAISS index and metadata store.
-        - Loads threat rules from configuration.
-        - Initializes the ProxyCNN model used for Grad-CAM.
     """
-    # Initialize FAISS index and metadata.
     try:
         index, metadata_store = load_index()
         logger.info("FAISS index loaded successfully.")
@@ -128,20 +117,22 @@ async def lifespan(app: FastAPI) -> Awaitable[None]:
         metadata_store = []
         logger.info("FAISS index files not found. Created new empty index.")
 
-    # Load threat rules.
     rules = load_threat_rules()
     logger.info("Threat rules loaded from configuration.")
 
-    # Initialize ProxyCNN for Grad-CAM generation.
-    proxy_model = ProxyCNN(num_classes=len(rules.get("class_index_map", {})) or 8)
+    # Initialize Model Wrappers
+    app.state.enhancer = UnderwaterEnhancer()
+    app.state.detector = ObjectDetector()
 
     app.state.faiss_index = index
     app.state.metadata_store = metadata_store
     app.state.threat_rules = rules
-    app.state.proxy_model = proxy_model
+
+    # Grad-CAM proxy model
+    app.state.proxy_model = ProxyCNN(num_classes=len(rules.get("class_index_map", {})) or 8)
 
     logger.info(
-        "Track B server initialized — FAISS index loaded, rules loaded, ProxyCNN ready."
+        "Track B server initialized — FAISS index loaded, rules loaded, Models ready."
     )
 
     yield
@@ -153,7 +144,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS configuration for operator dashboard access.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -168,113 +158,85 @@ async def request_logging_middleware(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
-    """
-    Logs basic information about each incoming HTTP request.
-
-    Logs the HTTP method, request path, and response status code.
-    """
     method = request.method
     path = request.url.path
     logger.info("Incoming request: %s %s", method, path)
-
     response = await call_next(request)
-
     logger.info("Completed request: %s %s -> %s", method, path, response.status_code)
     return response
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
-async def analyze_frame(frame: FrameInput, request: Request) -> AnalyzeResponse:
+async def analyze_frame(request: Request, file: UploadFile = File(...)) -> AnalyzeResponse:
     """
-    Analyzes all detections in a frame and returns threat assessments.
-
-    This endpoint:
-        1. Converts the incoming FrameInput into the Track A-style dictionary
-           expected by the threat scoring engine.
-        2. Scores the frame using score_frame().
-        3. Generates Grad-CAM heatmaps for each detection (best-effort).
+    Full Pipeline: Image Upload -> Enhancement -> Detection -> Threat Scoring -> Grad-CAM.
     """
     app_state = request.app.state
-    index = app_state.faiss_index
-    metadata_store = app_state.metadata_store
-    rules = app_state.threat_rules
-    proxy_model: ProxyCNN = app_state.proxy_model
 
-    # Convert input to Track A-compatible dictionary.
-    track_a_output: dict[str, Any] = {
-        "image_id": frame.image_id,
-        "detections": [
-            {
-                "class": det.class_name,
-                "confidence": det.confidence,
-                "bbox": det.bbox,
-                "embedding": det.embedding,
-            }
-            for det in frame.detections
-        ],
-    }
+    # 1. Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+        shutil.copyfileobj(file.file, temp_file)
+        temp_image_path = temp_file.name
 
-    # Edge case: empty detections list.
-    if not track_a_output["detections"]:
-        return AnalyzeResponse(
-            image_id=frame.image_id,
-            frame_threat_level="NONE",
-            scored_detections=[],
-            heatmap_paths=[],
-        )
-
-    scored_frame = score_frame(
-        track_a_output=track_a_output,
-        index=index,
-        metadata_store=metadata_store,
-        rules=rules,
-    )
-
-    scored_detections_raw = scored_frame.get("scored_detections", []) or []
-
-    # Best-effort Grad-CAM heatmap generation. If the underlying image file
-    # does not exist or Grad-CAM fails, the server still returns threat scores.
-    heatmap_paths: list[str] = []
     try:
-        heatmap_paths = batch_generate_heatmaps(
-            image_path=frame.image_id,
-            scored_detections=scored_detections_raw,
-            model=proxy_model,
-        )
-    except FileNotFoundError:
-        logger.warning(
-            "Image file '%s' not found for Grad-CAM generation; "
-            "returning threat scores without heatmaps.",
-            frame.image_id,
-        )
-        heatmap_paths = []
-    except Exception as exc:  # pragma: no cover - defensive logging
-        logger.error(
-            "Failed to generate Grad-CAM heatmaps for '%s': %s",
-            frame.image_id,
-            exc,
-        )
-        heatmap_paths = []
+        # Load image for processing
+        import cv2
+        img = cv2.imread(temp_image_path)
+        if img is None:
+            raise ValueError("Could not read the uploaded image.")
 
-    scored_detections_output = [
-        ScoredDetectionOutput(
-            class_name=det.get("class", ""),
-            confidence=float(det.get("confidence", 0.0)),
-            bbox=list(det.get("bbox", [])),
-            threat_level=str(det.get("threat_level", "")),
-            threat_score=float(det.get("threat_score", 0.0)),
-            reason=str(det.get("reason", "")),
-            similarity_match=det.get("similarity_match") or {},
-        )
-        for det in scored_detections_raw
-    ]
+        # 2. Image Enhancement
+        enhanced_img = app_state.enhancer.enhance(img)
 
-    return AnalyzeResponse(
-        image_id=str(scored_frame.get("image_id", frame.image_id)),
-        frame_threat_level=str(scored_frame.get("frame_threat_level", "NONE")),
-        scored_detections=scored_detections_output,
-        heatmap_paths=heatmap_paths,
-    )
+        # 3. Object Detection (YOLOv11 Placeholder)
+        detections = app_state.detector.detect(enhanced_img)
+
+        # 4. Prepare track_a_output for threat scoring pipeline
+        track_a_output = {
+            "image_id": os.path.basename(temp_image_path),
+            "detections": [
+                {
+                    "class": det["class"],
+                    "confidence": det["confidence"],
+                    "bbox": det["bbox"],
+                    "embedding": [0.0] * 128, # Placeholder embeddings
+                }
+                for det in detections
+            ],
+        }
+
+        # 5. Run Scoring & Explainability Pipeline
+        pipeline_result = run_pipeline(
+            track_a_output=track_a_output,
+            image_path=temp_image_path,
+            save_outputs=False
+        )
+
+        # 6. Handle Heatmap (Grad-CAM)
+        heatmap_b64 = ""
+        if pipeline_result["heatmap_paths"]:
+            heatmap_path = pipeline_result["heatmap_paths"][0]
+            if os.path.exists(heatmap_path):
+                heatmap_img = cv2.imread(heatmap_path)
+                heatmap_b64 = image_to_base64(heatmap_img)
+
+        # 7. Convert Enhanced Image to Base64
+        enhanced_b64 = image_to_base64(enhanced_img)
+
+        return AnalyzeResponse(
+            enhanced_image=enhanced_b64,
+            detections=detections,
+            heatmap=heatmap_b64,
+            threat_level=pipeline_result["frame_threat_level"]
+        )
+
+    except Exception as e:
+        logger.exception("Error during analysis pipeline")
+        raise Exception(f"Pipeline error: {str(e)}")
+    finally:
+        # Cleanup temporary file
+        if os.path.exists(temp_image_path):
+            os.remove(temp_image_path)
 
 
 @app.post("/threat", response_model=ThreatResponse)
@@ -282,13 +244,6 @@ async def assess_threat(
     payload: SingleDetectionInput,
     request: Request,
 ) -> ThreatResponse:
-    """
-    Assesses the threat level for a single detection.
-
-    The endpoint:
-        1. Performs a similarity search for the detection embedding.
-        2. Scores the detection using the shared threat rules.
-    """
     app_state = request.app.state
     index = app_state.faiss_index
     metadata_store = app_state.metadata_store
@@ -324,12 +279,6 @@ async def assess_threat(
 
 @app.get("/health", response_model=HealthResponse)
 async def health(request: Request) -> HealthResponse:
-    """
-    Returns the health status of the Track B server.
-
-    Includes FAISS index size, whether threat rules are loaded, and the
-    current UTC timestamp in ISO-8601 format.
-    """
     app_state = request.app.state
     index = app_state.faiss_index
     rules = app_state.threat_rules
@@ -348,4 +297,3 @@ async def health(request: Request) -> HealthResponse:
 
 if __name__ == "__main__":
     uvicorn.run("api.server:app", host="0.0.0.0", port=8000, reload=True)
-

@@ -1,15 +1,8 @@
 import type { ReactElement } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import {
-  AuthenticateWithRedirectCallback,
-  ClerkLoaded,
-  ClerkLoading,
-  RedirectToSignIn,
-  SignedIn,
-  SignedOut,
-} from "@clerk/clerk-react";
 import { Toaster } from "react-hot-toast";
 import ClickSpark from "./components/common/ClickSpark";
+import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { AppShell } from "./components/layout/AppShell";
 import { useApiHealth } from "./hooks/useApiHealth";
 import { ThemeProvider } from "./theme/ThemeContext";
@@ -17,20 +10,13 @@ import { AnalyzePage } from "./pages/AnalyzePage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import LandingPage from "./pages/LandingPage";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { SignInPage } from "./pages/SignInPage";
-import { SignUpPage } from "./pages/SignUpPage";
+import { SSOCallbackPage } from "./pages/SSOCallbackPage";
 import { ThreatPage } from "./pages/ThreatPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import "leaflet/dist/leaflet.css";
-
-const ProtectedRoute = ({ children }: { children: ReactElement }) => (
-  <>
-    <SignedIn>{children}</SignedIn>
-    <SignedOut>
-      <RedirectToSignIn />
-    </SignedOut>
-  </>
-);
 
 const RouterContent = () => {
   useApiHealth();
@@ -44,9 +30,10 @@ const RouterContent = () => {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route path="/sign-in/*" element={<SignInPage />} />
-      <Route path="/sign-up/*" element={<SignUpPage />} />
-      <Route path="/sso-callback" element={<AuthenticateWithRedirectCallback />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/sso-callback" element={<SSOCallbackPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/dashboard" element={withShell(<DashboardPage />)} />
       <Route path="/analyze" element={withShell(<AnalyzePage />)} />
       <Route path="/threat" element={withShell(<ThreatPage />)} />
@@ -61,12 +48,7 @@ const App = () => (
   <ThemeProvider>
     <BrowserRouter>
       <ClickSpark sparkColor="#00b4d8" sparkSize={10} sparkRadius={18} sparkCount={10} duration={450}>
-        <ClerkLoading>
-          <div className="min-h-screen bg-[var(--bg-primary)]" />
-        </ClerkLoading>
-        <ClerkLoaded>
-          <RouterContent />
-        </ClerkLoaded>
+        <RouterContent />
       </ClickSpark>
     </BrowserRouter>
     <Toaster

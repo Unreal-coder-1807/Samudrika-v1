@@ -24,37 +24,6 @@ def run_pipeline(
 ) -> dict[str, Any]:
     """
     Runs the complete Track B pipeline for one frame.
-
-    Steps:
-        1. Load FAISS index and metadata.
-        2. Load threat rules from configuration.
-        3. Call score_frame(track_a_output, index, metadata_store, rules).
-        4. Initialize the ProxyCNN model used for Grad-CAM.
-        5. If an image_path is provided and exists on disk, call
-           batch_generate_heatmaps() to generate Grad-CAM overlays.
-           Otherwise, set heatmap_paths to an empty list and log a warning.
-        6. If save_outputs is True, save the scored result JSON to
-           outputs/results/{image_id}_{timestamp}.json.
-        7. Log a summary including image_id, frame_threat_level, and the
-           number of detections.
-        8. Return a dictionary enriched with frame-level threat metadata:
-           {
-               "image_id": str,
-               "frame_threat_level": str,
-               "scored_detections": list,
-               "heatmap_paths": list,
-               "processed_at": ISO timestamp str,
-           }
-
-    Args:
-        track_a_output: Single-frame output from Track A in JSON-compatible
-            dictionary format.
-        image_path: Optional path to the original image used for detections;
-            used to generate Grad-CAM overlays when available.
-        save_outputs: Whether to persist the enriched pipeline results to disk.
-
-    Returns:
-        dict[str, Any]: Full enriched result dictionary as described above.
     """
     # 1. Load FAISS index and metadata.
     try:
@@ -63,10 +32,7 @@ def run_pipeline(
             "Loaded FAISS index with %d vectors.", get_index_size(index)
         )
     except FileNotFoundError:
-        # Inference can still proceed, but similarity-based overrides will be
-        # ineffective due to the lack of historical embeddings.
         from vector_store.faiss_index import create_index
-
         index = create_index()
         metadata_store = []
         logger.warning(
@@ -99,7 +65,7 @@ def run_pipeline(
                 scored_detections=scored_detections,
                 model=proxy_model,
             )
-        except Exception as exc:  # pragma: no cover - defensive logging
+        except Exception as exc:
             logger.error(
                 "Failed to generate Grad-CAM heatmaps for '%s': %s",
                 image_path,
@@ -134,14 +100,6 @@ def run_pipeline(
             json.dump(result, f, ensure_ascii=False, indent=2)
 
         logger.info("Saved pipeline result to %s", output_path)
-
-    # 7. Log a concise summary.
-    logger.info(
-        "Pipeline summary — Image ID: %s | Frame Threat: %s | Detections: %d",
-        image_id,
-        result["frame_threat_level"],
-        len(scored_detections),
-    )
 
     return result
 

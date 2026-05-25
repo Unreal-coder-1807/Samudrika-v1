@@ -1,9 +1,10 @@
 import { Bell } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
-import UserPanel from '../auth/UserPanel'
 import { ThemeToggle } from '../common/ThemeToggle'
+import { UserPanel } from '../dashboard/user-panel'
 
 const titleMap: Record<string, string> = {
+  '/': 'Operational Overview',
   '/dashboard': 'Operational Overview',
   '/analyze': 'Frame Analysis',
   '/threat': 'Single Detection Scorer',
